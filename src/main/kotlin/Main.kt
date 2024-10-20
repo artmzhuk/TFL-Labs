@@ -89,7 +89,7 @@ fun main(args: Array<String>) {
     net.automatalib.util.automaton.fsa.DFAs.combine( test1, test2, ArrayAlphabet('a', 'b', 'c', 'd'), res)
     Visualization.visualize(res)*/
     //test1()
-    val size = 4
+    val size = 6
     val nesting = 10
     lexems.generateLexems(size, nesting)
 

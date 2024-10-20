@@ -13,7 +13,7 @@ import java.util.*
 
 fun concatenateAutomata(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>): CompactDFA<String> {
     var alphabetSet = dfa1.inputAlphabet.toTypedArray().toSet()
-    alphabetSet.plus(dfa2.inputAlphabet.toTypedArray())
+    alphabetSet = alphabetSet.plus(dfa2.inputAlphabet.toTypedArray())
     val alphabet = ArrayAlphabet<String>(*alphabetSet.toTypedArray())
     val resultNFA = CompactNFA(alphabet)
 
@@ -35,9 +35,11 @@ fun concatenateAutomata(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>): Com
 
     for (state in dfa1.states) {
         for (input in alphabet) {
-            val nextState = dfa1.getSuccessor(state, input)
-            if (nextState != -1) {
-                resultNFA.addTransition(stateMapping1[state]!!, input, stateMapping1[nextState]!!)
+            if (dfa1.inputAlphabet.containsSymbol(input)) {
+                val nextState = dfa1.getSuccessor(state, input)
+                if (nextState != -1) {
+                    resultNFA.addTransition(stateMapping1[state]!!, input, stateMapping1[nextState]!!)
+                }
             }
         }
     }
@@ -46,7 +48,7 @@ fun concatenateAutomata(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>): Com
         if (dfa1.isAccepting(state)) {
             resultNFA.setAccepting(stateMapping1[state]!!, false) // Сделать не финальным, т.к. продолжается в dfa2
             for (input in alphabet) {
-                if (dfa2.inputAlphabet.containsSymbol(input)){
+                if (dfa2.inputAlphabet.containsSymbol(input)) {
                     val nextState = dfa2.getSuccessor(dfa2.initialState, input)
                     if (nextState != null) {
                         resultNFA.addTransition(stateMapping1[state]!!, input, stateMapping2[nextState]!!)
@@ -57,15 +59,17 @@ fun concatenateAutomata(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>): Com
     }
     for (state in dfa2.states) {
         for (input in alphabet) {
-            val nextState = dfa2.getSuccessor(state, input)
-            if (nextState != -1) {
-                resultNFA.addTransition(stateMapping2[state]!!, input, stateMapping2[nextState]!!)
+            if (dfa2.inputAlphabet.containsSymbol(input)) {
+                val nextState = dfa2.getSuccessor(state, input)
+                if (nextState != -1) {
+                    resultNFA.addTransition(stateMapping2[state]!!, input, stateMapping2[nextState]!!)
+                }
             }
         }
     }
     val resultDFA = CompactDFA<String>(alphabet)
-    NFAs.determinize(resultNFA, alphabet, resultDFA)
-    return DFAs.minimize(resultDFA)
+    NFAs.determinize(resultNFA, alphabet, resultDFA, true, true)
+    return resultDFA
 }
 
 fun <I> removeCycles(dfa: CompactDFA<I>, currentState: Int, color: Array<String>) {
@@ -117,8 +121,8 @@ fun generateInfiniteAutomata(size: Int, alphabet: Alphabet<String>): CompactDFA<
             break
         }
     }
-    for(state in dfa.states){
-        if(state != dfa.initialState && dfa.isAccepting(state)){
+    for (state in dfa.states) {
+        if (state != dfa.initialState && dfa.isAccepting(state)) {
             dfa.setAccepting(dfa.initialState, false)
             break
         }
@@ -126,7 +130,7 @@ fun generateInfiniteAutomata(size: Int, alphabet: Alphabet<String>): CompactDFA<
     return dfa
 }
 
-fun dfsForEqual(dfa: CompactDFA<String>, currentState: Int, visited: Array<Boolean>, toChange:String): Boolean{
+fun dfsForEqual(dfa: CompactDFA<String>, currentState: Int, visited: Array<Boolean>, toChange: String): Boolean {
     visited[currentState] = true
     var res = true
     for (input in dfa.inputAlphabet) {
@@ -136,9 +140,9 @@ fun dfsForEqual(dfa: CompactDFA<String>, currentState: Int, visited: Array<Boole
             res = false
             if (true) {
                 val needToChange = dfsForEqual(dfa, nextState, visited, toChange)
-                if (needToChange){
+                if (needToChange) {
                     dfa.removeTransition(currentState, input, nextState)
-                    if(dfa.getTransition(currentState, toChange) == null){
+                    if (dfa.getTransition(currentState, toChange) == null) {
                         dfa.addTransition(currentState, toChange, nextState)
                     }
                 }
@@ -171,21 +175,21 @@ fun <I> convertDfaToNfa(dfa: CompactDFA<I>): CompactNFA<I> {
     return nfa
 }
 
-fun addEpsilonTransition(automata: CompactNFA<String>, from: Int, to:Int){
-    if(automata.isAccepting(to)){
+fun addEpsilonTransition(automata: CompactNFA<String>, from: Int, to: Int) {
+    if (automata.isAccepting(to)) {
         automata.setAccepting(from, true)
     }
-    for (input in automata.inputAlphabet){
+    for (input in automata.inputAlphabet) {
         val nextStates = automata.getTransitions(to, input)
         if (nextStates != null) {
-            for (next in nextStates){
+            for (next in nextStates) {
                 automata.addTransition(from, input, next)
             }
         }
     }
 }
 
-fun kleeneStar(dfa:CompactDFA<String>): CompactDFA<String>{
+fun kleeneStar(dfa: CompactDFA<String>): CompactDFA<String> {
     var nfa = convertDfaToNfa(dfa)
     val oldInitial = nfa.initialStates.iterator().next()!!
     val newInitial = nfa.addState()
@@ -194,8 +198,8 @@ fun kleeneStar(dfa:CompactDFA<String>): CompactDFA<String>{
     nfa.setAccepting(newInitial, true)
     addEpsilonTransition(nfa, newInitial, oldInitial)
     //Visualization.visualize(nfa)
-    for (state in nfa.states){
-        if(state != newInitial && nfa.isAccepting(state)){
+    for (state in nfa.states) {
+        if (state != newInitial && nfa.isAccepting(state)) {
             addEpsilonTransition(nfa, state, newInitial)
         }
     }

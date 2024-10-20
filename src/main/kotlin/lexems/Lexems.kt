@@ -54,6 +54,8 @@ fun generateEqual(size: Int, alphabet:Array<String>):CompactDFA<String>{
         Visualization.visualize(dfa)
         val concat1 = concatenateAutomata(dfa1, dfa)
         Visualization.visualize(concat1)
+        val concat2 = concatenateAutomata(concat1, dfa1)
+        Visualization.visualize(concat2)
         return dfa
     } else {
         var dfa = generateFiniteAutomata(size, ArrayAlphabet<String>(*alphabet))
