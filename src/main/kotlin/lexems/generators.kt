@@ -11,6 +11,27 @@ import net.automatalib.util.automaton.random.RandomAutomata
 import net.automatalib.visualization.Visualization
 import java.util.*
 
+fun dfaAnd(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>):CompactDFA<String>{
+    var alphabetSet = dfa1.inputAlphabet.toTypedArray().toSet()
+    alphabetSet = alphabetSet.intersect(dfa2.inputAlphabet.toTypedArray().toSet())
+    val alphabet = ArrayAlphabet<String>(*alphabetSet.toTypedArray())
+    val dfa = DFAs.and(dfa1, dfa2, alphabet)
+    var hasAccepting = false
+    for (state in dfa.states){
+        if(dfa.isAccepting(state)){
+            hasAccepting = true
+            break
+        }
+    }
+    if (hasAccepting){
+        return dfa
+    }
+    val res = CompactDFA<String>(ArrayAlphabet<String>(*alphabetSet.toTypedArray()))
+    res.addState()
+    res.initialState = 0
+    return res
+}
+
 fun concatenateAutomata(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>): CompactDFA<String> {
     var alphabetSet = dfa1.inputAlphabet.toTypedArray().toSet()
     alphabetSet = alphabetSet.plus(dfa2.inputAlphabet.toTypedArray())
