@@ -1,9 +1,6 @@
 import dk.brics.automaton.Automaton
 import dk.brics.automaton.RegExp
-import lexems.concatenateAutomata
-import lexems.convertDfaToNfa
-import lexems.generateAlphabets
-import lexems.kleeneStar
+import lexems.*
 import net.automatalib.alphabet.Alphabet
 import net.automatalib.alphabet.ArrayAlphabet
 import net.automatalib.automaton.fsa.CompactDFA
@@ -89,15 +86,17 @@ fun main(args: Array<String>) {
     net.automatalib.util.automaton.fsa.DFAs.combine( test1, test2, ArrayAlphabet('a', 'b', 'c', 'd'), res)
     Visualization.visualize(res)*/
     //test1()
-    val size = 30
-    val nesting = 10
-/*
+    val size = 10
+    val nesting = 3
     for(i in 0..100){
-        lexems.generateLexems(size, nesting)
-        println(i)
+        val lexems = lexems.generateLexems(size, nesting)
+        val res = combineLexems(size, nesting, lexems)
+        println(res.size())
     }
-*/
-    lexems.generateLexems(size, nesting)
+    val lexems = lexems.generateLexems(size, nesting)
+    val res = combineLexems(size, nesting, lexems)
+    println(res.size())
+    Visualization.visualize(res)
 
     //val dfa = lexems.generateFiniteAutomata(size, alphabet)
     //generateAlphabets()

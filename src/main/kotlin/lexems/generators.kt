@@ -4,26 +4,25 @@ import net.automatalib.alphabet.Alphabet
 import net.automatalib.alphabet.ArrayAlphabet
 import net.automatalib.automaton.fsa.CompactDFA
 import net.automatalib.automaton.fsa.CompactNFA
-import net.automatalib.automaton.fsa.NFA
 import net.automatalib.util.automaton.fsa.DFAs
 import net.automatalib.util.automaton.fsa.NFAs
 import net.automatalib.util.automaton.random.RandomAutomata
 import net.automatalib.visualization.Visualization
 import java.util.*
 
-fun dfaAnd(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>):CompactDFA<String>{
+fun dfaAnd(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>): CompactDFA<String> {
     var alphabetSet = dfa1.inputAlphabet.toTypedArray().toSet()
     alphabetSet = alphabetSet.intersect(dfa2.inputAlphabet.toTypedArray().toSet())
     val alphabet = ArrayAlphabet<String>(*alphabetSet.toTypedArray())
     val dfa = DFAs.and(dfa1, dfa2, alphabet)
     var hasAccepting = false
-    for (state in dfa.states){
-        if(dfa.isAccepting(state)){
+    for (state in dfa.states) {
+        if (dfa.isAccepting(state)) {
             hasAccepting = true
             break
         }
     }
-    if (hasAccepting){
+    if (hasAccepting) {
         return dfa
     }
     val res = CompactDFA<String>(ArrayAlphabet<String>(*alphabetSet.toTypedArray()))
@@ -32,7 +31,68 @@ fun dfaAnd(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>):CompactDFA<String
     return res
 }
 
-fun concatenateAutomata(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>): CompactDFA<String> {
+fun dfaUnion(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>): CompactDFA<String> {
+    var alphabetSet = dfa1.inputAlphabet.toTypedArray().toSet()
+    alphabetSet = alphabetSet.plus(dfa2.inputAlphabet.toTypedArray().toSet())
+    val alphabet = ArrayAlphabet<String>(*alphabetSet.toTypedArray())
+    val newNFA = CompactNFA<String>(alphabet)
+    val stateMapping1 = mutableMapOf<Int, Int>()
+    val stateMapping2 = mutableMapOf<Int, Int>()
+    for (state in dfa1.states) {
+        val newState = newNFA.addState(dfa1.isAccepting(state))
+        stateMapping1[state] = newState
+    }
+    for (state in dfa1.states) {
+        for (input in dfa1.inputAlphabet) {
+            val nextState = dfa1.getSuccessor(state, input)
+            if (nextState != -1) {
+                newNFA.addTransition(stateMapping1[state]!!, input, stateMapping1[nextState]!!)
+            }
+        }
+    }
+    for (state in dfa2.states) {
+        val newState = newNFA.addState(dfa2.isAccepting(state))
+        stateMapping2[state] = newState
+    }
+    for (state in dfa2.states) {
+        for (input in dfa2.inputAlphabet) {
+            val nextState = dfa2.getSuccessor(state, input)
+            if (nextState != -1) {
+                newNFA.addTransition(stateMapping2[state]!!, input, stateMapping2[nextState]!!)
+            }
+        }
+    }
+    val newInitial = newNFA.addInitialState()
+    addEpsilonTransition(newNFA, newInitial, stateMapping1[dfa1.initialState]!!)
+    addEpsilonTransition(newNFA, newInitial, stateMapping2[dfa2.initialState]!!)
+    val resultDFA = CompactDFA<String>(alphabet)
+    NFAs.determinize(newNFA, alphabet, resultDFA, true, true)
+    //Visualization.visualize(dfa1)
+    //Visualization.visualize(dfa2)
+    //Visualization.visualize(resultDFA)
+    //dk.brics.automaton.BasicOperations.union()
+    return resultDFA
+}
+
+fun copyWithNewAlphabet(dfa: CompactDFA<String>, newAlphabet: Alphabet<String>): CompactDFA<String> {
+    val newDFA = CompactDFA<String>(newAlphabet)
+    val stateMapping1 = mutableMapOf<Int, Int>()
+    for (state in dfa.states) {
+        val newState = newDFA.addState(dfa.isAccepting(state))
+        stateMapping1[state] = newState
+    }
+    for (state in dfa.states) {
+        for (input in dfa.inputAlphabet) {
+            val nextState = dfa.getSuccessor(state, input)
+            if (nextState != -1) {
+                newDFA.addTransition(stateMapping1[state]!!, input, stateMapping1[nextState]!!)
+            }
+        }
+    }
+    return newDFA
+}
+
+fun concatenateAutomataWithoutDeterminisation(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>): CompactNFA<String> {
     var alphabetSet = dfa1.inputAlphabet.toTypedArray().toSet()
     alphabetSet = alphabetSet.plus(dfa2.inputAlphabet.toTypedArray())
     val alphabet = ArrayAlphabet<String>(*alphabetSet.toTypedArray())
@@ -88,12 +148,22 @@ fun concatenateAutomata(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>): Com
             }
         }
     }
+    return resultNFA
+
+}
+
+fun concatenateAutomata(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>): CompactDFA<String> {
+    var alphabetSet = dfa1.inputAlphabet.toTypedArray().toSet()
+    alphabetSet = alphabetSet.plus(dfa2.inputAlphabet.toTypedArray())
+    val alphabet = ArrayAlphabet<String>(*alphabetSet.toTypedArray())
+    val resultNFA = concatenateAutomataWithoutDeterminisation(dfa1, dfa2)
     val resultDFA = CompactDFA<String>(alphabet)
     NFAs.determinize(resultNFA, alphabet, resultDFA, true, true)
     return resultDFA
 }
 
-fun <I> removeCycles(dfa: CompactDFA<I>, currentState: Int, color: Array<String>) {
+
+    fun <I> removeCycles(dfa: CompactDFA<I>, currentState: Int, color: Array<String>) {
     color[currentState] = "grey"
     var numOfTransitions = 0
     for (input in dfa.inputAlphabet) {
@@ -230,4 +300,10 @@ fun kleeneStar(dfa: CompactDFA<String>): CompactDFA<String> {
     val resultDFA = CompactDFA<String>(nfa.inputAlphabet)
     NFAs.determinize(nfa, nfa.inputAlphabet, resultDFA)
     return DFAs.minimize(resultDFA)
+}
+
+fun kleeneOneOrMore(dfa: CompactDFA<String>): CompactDFA<String> {
+    val kleene = kleeneStar(dfa)
+    val res = concatenateAutomata(dfa, kleene)
+    return res
 }

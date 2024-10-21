@@ -5,6 +5,21 @@ import net.automatalib.automaton.fsa.CompactDFA
 import net.automatalib.util.automaton.fsa.DFAs
 import net.automatalib.visualization.Visualization
 
+class LexemBundle(
+    val constDFA: CompactDFA<String>,
+    val varDFA: CompactDFA<String>,
+    val eolDFA: CompactDFA<String>,
+    val blankDFA: CompactDFA<String>,
+    val equalDFA: CompactDFA<String>,
+    val sepDFA: CompactDFA<String>,
+    val lbr1DFA: CompactDFA<String>,
+    val lbr2DFA: CompactDFA<String>,
+    val lbr3DFA: CompactDFA<String>,
+    val rbr1DFA: CompactDFA<String>,
+    val rbr2DFA: CompactDFA<String>,
+    val rbr3DFA: CompactDFA<String>
+)
+
 fun generateAlphabets() {
     val initialSymbols = mutableSetOf("a", "b", "c", "0", "1", "2")
 
@@ -17,7 +32,7 @@ fun generateAlphabets() {
     println("Third Set: $thirdSet")
 }
 
-fun generateLexems(size: Int, nesting: Int) {
+fun generateLexems(size: Int, nesting: Int):LexemBundle {
     val initialSymbols = mutableSetOf("a", "b", "c", "0", "1", "2").shuffled()
 
     val eolBlankList = initialSymbols.subList(0, 2)
@@ -38,9 +53,16 @@ fun generateLexems(size: Int, nesting: Int) {
     var rbr2DFA = generateRbr(size, ArrayAlphabet<String>(*bracketsSet.toTypedArray()), varDFA, constDFA, lbr2DFA)
     var rbr3DFA = generateRbr(size, ArrayAlphabet<String>(*bracketsSet.toTypedArray()), varDFA, constDFA, lbr3DFA)
 
+    val lexemBundle = LexemBundle(
+        constDFA, varDFA, eolDFA, blankDFA, equalDFA, sepDFA,
+        lbr1DFA, lbr2DFA, lbr3DFA, rbr1DFA, rbr2DFA, rbr3DFA
+    )
 
-/*    Visualization.visualize(constDFA)
-    Visualization.visualize(varDFA)*/
+    //dfaUnion(constDFA, varDFA)
+    //Visualization.visualize(constDFA)
+    //Visualization.visualize(varDFA)
+    //Visualization.visualize(dfaOr(constDFA, varDFA))
+
     //Visualization.visualize(DFAs.and(constDFA, varDFA,  ArrayAlphabet()))
 /*    Visualization.visualize(eolDFA)
     Visualization.visualize(blankDFA)
@@ -54,7 +76,7 @@ fun generateLexems(size: Int, nesting: Int) {
     Visualization.visualize(rbr1DFA)
     Visualization.visualize(rbr2DFA)
     Visualization.visualize(rbr3DFA)*/
-
+    return lexemBundle
 }
 
 fun generateRbr(size:Int, alphabet: ArrayAlphabet<String>, varDFA: CompactDFA<String>, constDFA: CompactDFA<String>, lbrDFA: CompactDFA<String>):CompactDFA<String>{
@@ -77,6 +99,7 @@ fun generateRbr(size:Int, alphabet: ArrayAlphabet<String>, varDFA: CompactDFA<St
 
 fun generateLbr(size:Int, alphabet: ArrayAlphabet<String>, varDFA: CompactDFA<String>, constDFA: CompactDFA<String>):CompactDFA<String>{
     while (true){
+        //TODO ?
         val lbr1DFA = if (size > 2){
             generateFiniteAutomata(2, alphabet)
         } else {
