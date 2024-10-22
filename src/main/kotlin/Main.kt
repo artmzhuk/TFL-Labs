@@ -7,7 +7,7 @@ import net.automatalib.automaton.fsa.CompactDFA
 import net.automatalib.util.automaton.fsa.DFAs
 import net.automatalib.visualization.Visualization
 
-fun regex(regex:String):CompactDFA<Char>{
+fun regex(regex: String): CompactDFA<Char> {
     val bricsAutomaton: Automaton = RegExp(regex).toAutomaton()
 
     val alphabet: Alphabet<Char> = ArrayAlphabet<Char>('a', 'b', 'c', 'd')
@@ -19,7 +19,7 @@ fun regex(regex:String):CompactDFA<Char>{
         map[state] = sourceState
     }
     dfa.initialState = map[bricsAutomaton.initialState]
-    for (state in bricsAutomaton.states){
+    for (state in bricsAutomaton.states) {
         for (trans in state.transitions) {
             dfa.addTransition(map[state], trans.min, map[trans.dest])
         }
@@ -28,7 +28,7 @@ fun regex(regex:String):CompactDFA<Char>{
     return dfa
 }
 
-fun test(alphabet: Alphabet<String>):CompactDFA<String>{
+fun test(alphabet: Alphabet<String>): CompactDFA<String> {
     val dfa = CompactDFA<String>(alphabet)
     dfa.addState()
     dfa.addState()
@@ -49,7 +49,7 @@ fun test(alphabet: Alphabet<String>):CompactDFA<String>{
     return dfa
 }
 
-fun test1():CompactDFA<String>{
+fun test1(): CompactDFA<String> {
     val dfa = CompactDFA<String>(ArrayAlphabet("a", "b"))
     dfa.addState()
     dfa.addState()
@@ -68,7 +68,7 @@ fun test1():CompactDFA<String>{
     dfa1.addTransition(1, "d", 1)
     dfa1.setAccepting(0, true)
     dfa1.setAccepting(1, true)
-    
+
     Visualization.visualize(dfa)
     Visualization.visualize(dfa1)
     Visualization.visualize(DFAs.and(dfa, dfa, ArrayAlphabet()))
@@ -76,27 +76,83 @@ fun test1():CompactDFA<String>{
     return dfa
 }
 
+
+fun test3() {
+    val size = 3
+    val nesting = 0
+    val lexems = lexems.generateLexems(size, nesting)
+
+    val eolWord = findWordForDFA(lexems.eolDFA)
+    val constWord = findWordForDFA(lexems.constDFA)
+    val equalWord = findWordForDFA(lexems.equalDFA)
+    val lbr1Word = findWordForDFA(lexems.lbr1DFA)
+    val rbr1Word = findWordForDFA(lexems.rbr1DFA)
+    val varWord = findWordForDFA(lexems.varDFA)
+    val sepWord = findWordForDFA(lexems.sepDFA)
+
+    val res =
+        eolWord + eolWord + constWord + lbr1Word + varWord + equalWord + constWord + sepWord + rbr1Word + eolWord + eolWord
+    println("res word: $res")
+
+    val resDFA = combineLexems(size, nesting, lexems)
+    println(resDFA.accepts(res.map { it.toString() }.toMutableList()))
+
+    Visualization.visualize(resDFA)
+
+}
+
+fun test4() {
+    val size = 5
+    val nesting = 1
+    val lexems = lexems.generateLexems(size, nesting)
+
+    val eolWord = findWordForDFA(lexems.eolDFA)
+    val constWord = findWordForDFA(lexems.constDFA)
+    val equalWord = findWordForDFA(lexems.equalDFA)
+    val lbr1Word = findWordForDFA(lexems.lbr1DFA)
+    val rbr1Word = findWordForDFA(lexems.rbr1DFA)
+    val lbr2Word = findWordForDFA(lexems.lbr2DFA)
+    val rbr2Word = findWordForDFA(lexems.rbr2DFA)
+    val lbr3Word = findWordForDFA(lexems.lbr3DFA)
+    val rbr3Word = findWordForDFA(lexems.rbr3DFA)
+    val varWord = findWordForDFA(lexems.varDFA)
+    val sepWord = findWordForDFA(lexems.sepDFA)
+    val blankWord = findWordForDFA(lexems.blankDFA)
+
+    val res = eolWord + eolWord +
+            constWord + lbr1Word + eolWord +
+            lbr3Word + varWord + rbr3Word +
+            equalWord + lbr3Word + lbr2Word + constWord + blankWord + constWord + rbr2Word + rbr3Word +
+            sepWord + rbr1Word + eolWord + eolWord
+    println("res word: $res")
+
+    val resDFA = combineLexems(size, nesting, lexems)
+    println(resDFA.accepts(res.map { it.toString() }.toMutableList()))
+}
+
 fun main(args: Array<String>) {
     val alphabet = ArrayAlphabet("a", "b", "c", "0", "1", "2")
-/*    val test1 = regex("a*b")
-    val test2 = regex("c*d")
-    Visualization.visualize(test1)
-    Visualization.visualize(test2)
-    val res = CompactDFA<Char>(ArrayAlphabet('a', 'b', 'c', 'd'))
-    net.automatalib.util.automaton.fsa.DFAs.combine( test1, test2, ArrayAlphabet('a', 'b', 'c', 'd'), res)
-    Visualization.visualize(res)*/
+    /*    val test1 = regex("a*b")
+        val test2 = regex("c*d")
+        Visualization.visualize(test1)
+        Visualization.visualize(test2)
+        val res = CompactDFA<Char>(ArrayAlphabet('a', 'b', 'c', 'd'))
+        net.automatalib.util.automaton.fsa.DFAs.combine( test1, test2, ArrayAlphabet('a', 'b', 'c', 'd'), res)
+        Visualization.visualize(res)*/
     //test1()
-    val size = 10
+    val size = 5
     val nesting = 3
-    for(i in 0..100){
+    //test3()
+    test4()
+    /*    for(i in 0..100){
+            val lexems = lexems.generateLexems(size, nesting)
+            val res = combineLexems(size, nesting, lexems)
+            println(res.size())
+        }
         val lexems = lexems.generateLexems(size, nesting)
         val res = combineLexems(size, nesting, lexems)
         println(res.size())
-    }
-    val lexems = lexems.generateLexems(size, nesting)
-    val res = combineLexems(size, nesting, lexems)
-    println(res.size())
-    Visualization.visualize(res)
+        Visualization.visualize(res)*/
 
     //val dfa = lexems.generateFiniteAutomata(size, alphabet)
     //generateAlphabets()
@@ -105,9 +161,9 @@ fun main(args: Array<String>) {
     //Visualization.visualize( kleeneStar(dfa))
     //Visualization.visualize(convertDfaToNfa(dfa))
 
-/*    val dfa2 = dfa
-    Visualization.visualize(dfa)
-    val concat = concatenateAutomata(dfa, dfa2, alphabet)
-    Visualization.visualize(concat)
-    Visualization.visualize(DFAs.and(concat, dfa, alphabet))*/
+    /*    val dfa2 = dfa
+        Visualization.visualize(dfa)
+        val concat = concatenateAutomata(dfa, dfa2, alphabet)
+        Visualization.visualize(concat)
+        Visualization.visualize(DFAs.and(concat, dfa, alphabet))*/
 }

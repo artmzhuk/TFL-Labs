@@ -7,7 +7,6 @@ import net.automatalib.automaton.fsa.CompactNFA
 import net.automatalib.util.automaton.fsa.DFAs
 import net.automatalib.util.automaton.fsa.NFAs
 import net.automatalib.util.automaton.random.RandomAutomata
-import net.automatalib.visualization.Visualization
 import java.util.*
 
 fun dfaAnd(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>): CompactDFA<String> {
@@ -127,7 +126,9 @@ fun concatenateAutomataWithoutDeterminisation(dfa1: CompactDFA<String>, dfa2: Co
 
     for (state in dfa1.states) {
         if (dfa1.isAccepting(state)) {
-            resultNFA.setAccepting(stateMapping1[state]!!, false) // Сделать не финальным, т.к. продолжается в dfa2
+            if (!dfa2.isAccepting(dfa2.initialState)){
+                resultNFA.setAccepting(stateMapping1[state]!!, false) // Сделать не финальным, т.к. продолжается в dfa2
+            }
             for (input in alphabet) {
                 if (dfa2.inputAlphabet.containsSymbol(input)) {
                     val nextState = dfa2.getSuccessor(dfa2.initialState, input)
@@ -163,7 +164,7 @@ fun concatenateAutomata(dfa1: CompactDFA<String>, dfa2: CompactDFA<String>): Com
 }
 
 
-    fun <I> removeCycles(dfa: CompactDFA<I>, currentState: Int, color: Array<String>) {
+fun <I> removeCycles(dfa: CompactDFA<I>, currentState: Int, color: Array<String>) {
     color[currentState] = "grey"
     var numOfTransitions = 0
     for (input in dfa.inputAlphabet) {
@@ -219,6 +220,26 @@ fun generateInfiniteAutomata(size: Int, alphabet: Alphabet<String>): CompactDFA<
         }
     }
     return dfa
+}
+
+fun findWordForDFA(dfa: CompactDFA<String>): String {
+    return findWordForDFARecursive(dfa, dfa.initialState!!, Array<Boolean>(dfa.size()) { false }, "")
+}
+
+private fun findWordForDFARecursive(dfa: CompactDFA<String>, currentState: Int, visited: Array<Boolean>, currentString: String): String {
+    visited[currentState] = true
+    if (dfa.isAccepting(currentState)) {
+        return currentString
+    }
+
+    for (input in dfa.inputAlphabet) {
+        val nextState = dfa.getSuccessor(currentState, input)
+        val trans = dfa.getTransition(currentState, input)
+        if (nextState != -1) {
+            return findWordForDFARecursive(dfa, nextState, visited, currentString + input)
+        }
+    }
+    return ""
 }
 
 fun dfsForEqual(dfa: CompactDFA<String>, currentState: Int, visited: Array<Boolean>, toChange: String): Boolean {
@@ -298,8 +319,8 @@ fun kleeneStar(dfa: CompactDFA<String>): CompactDFA<String> {
 
     //Visualization.visualize(nfa)
     val resultDFA = CompactDFA<String>(nfa.inputAlphabet)
-    NFAs.determinize(nfa, nfa.inputAlphabet, resultDFA)
-    return DFAs.minimize(resultDFA)
+    NFAs.determinize(nfa, nfa.inputAlphabet, resultDFA, true, true)
+    return resultDFA
 }
 
 fun kleeneOneOrMore(dfa: CompactDFA<String>): CompactDFA<String> {

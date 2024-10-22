@@ -32,7 +32,7 @@ fun generateAlphabets() {
     println("Third Set: $thirdSet")
 }
 
-fun generateLexems(size: Int, nesting: Int):LexemBundle {
+fun generateLexems(size: Int, nesting: Int): LexemBundle {
     val initialSymbols = mutableSetOf("a", "b", "c", "0", "1", "2").shuffled()
 
     val eolBlankList = initialSymbols.subList(0, 2)
@@ -64,43 +64,55 @@ fun generateLexems(size: Int, nesting: Int):LexemBundle {
     //Visualization.visualize(dfaOr(constDFA, varDFA))
 
     //Visualization.visualize(DFAs.and(constDFA, varDFA,  ArrayAlphabet()))
-/*    Visualization.visualize(eolDFA)
-    Visualization.visualize(blankDFA)
-    Visualization.visualize(equalDFA)
-    Visualization.visualize(sepDFA)
+    /*    Visualization.visualize(eolDFA)
+        Visualization.visualize(blankDFA)
+        Visualization.visualize(equalDFA)
+        Visualization.visualize(sepDFA)
 
-    Visualization.visualize(lbr1DFA)
-    Visualization.visualize(lbr2DFA)
-    Visualization.visualize(lbr3DFA)
+        Visualization.visualize(lbr1DFA)
+        Visualization.visualize(lbr2DFA)
+        Visualization.visualize(lbr3DFA)
 
-    Visualization.visualize(rbr1DFA)
-    Visualization.visualize(rbr2DFA)
-    Visualization.visualize(rbr3DFA)*/
+        Visualization.visualize(rbr1DFA)
+        Visualization.visualize(rbr2DFA)
+        Visualization.visualize(rbr3DFA)*/
     return lexemBundle
 }
 
-fun generateRbr(size:Int, alphabet: ArrayAlphabet<String>, varDFA: CompactDFA<String>, constDFA: CompactDFA<String>, lbrDFA: CompactDFA<String>):CompactDFA<String>{
-    while (true){
+fun generateRbr(
+    size: Int,
+    alphabet: ArrayAlphabet<String>,
+    varDFA: CompactDFA<String>,
+    constDFA: CompactDFA<String>,
+    lbrDFA: CompactDFA<String>
+): CompactDFA<String> {
+    while (true) {
         val rbr1DFA = generateFiniteAutomata(size, alphabet)
         val andConstSize = dfaAnd(rbr1DFA, constDFA).size()
         val andVarSize = dfaAnd(rbr1DFA, varDFA).size()
         val andLbrSize = dfaAnd(rbr1DFA, lbrDFA).size()
         if ((andConstSize == 1 || andConstSize == 0) && (andVarSize == 1 || andVarSize == 0)
-            && (andLbrSize == 1 || andLbrSize == 0)){
+            && (andLbrSize == 1 || andLbrSize == 0)
+        ) {
             val concat = concatenateAutomata(lbrDFA, rbr1DFA)
-            val concatAndLbr =  dfaAnd(lbrDFA, concat)
+            val concatAndLbr = dfaAnd(lbrDFA, concat)
             val concatAndRbr = dfaAnd(rbr1DFA, concat)
-            if ((concatAndRbr.size() == 0 || concatAndRbr.size() == 1) && (concatAndLbr.size() == 0 || concatAndLbr.size() == 1)){
+            if ((concatAndRbr.size() == 0 || concatAndRbr.size() == 1) && (concatAndLbr.size() == 0 || concatAndLbr.size() == 1)) {
                 return rbr1DFA
             }
         }
     }
 }
 
-fun generateLbr(size:Int, alphabet: ArrayAlphabet<String>, varDFA: CompactDFA<String>, constDFA: CompactDFA<String>):CompactDFA<String>{
-    while (true){
+fun generateLbr(
+    size: Int,
+    alphabet: ArrayAlphabet<String>,
+    varDFA: CompactDFA<String>,
+    constDFA: CompactDFA<String>
+): CompactDFA<String> {
+    while (true) {
         //TODO ?
-        val lbr1DFA = if (size > 2){
+        val lbr1DFA = if (size > 2) {
             generateFiniteAutomata(2, alphabet)
         } else {
             generateFiniteAutomata(size, alphabet)
@@ -111,14 +123,14 @@ fun generateLbr(size:Int, alphabet: ArrayAlphabet<String>, varDFA: CompactDFA<St
         //Visualization.visualize(DFAs.and(lbr1DFA, constDFA, alphabet))
 
         val andVarSize = dfaAnd(lbr1DFA, varDFA).size()
-        if ((andConstSize == 1 || andConstSize == 0) && (andVarSize == 1 || andVarSize == 0)){
+        if ((andConstSize == 1 || andConstSize == 0) && (andVarSize == 1 || andVarSize == 0)) {
             return lbr1DFA
         }
     }
 }
 
-fun generateEqualAndSep(size: Int, alphabet:Array<String>):CompactDFA<String>{
-    if (alphabet.size > 1){
+fun generateEqualAndSep(size: Int, alphabet: Array<String>): CompactDFA<String> {
+    if (alphabet.size > 1) {
         val firstLast = alphabet[0]
         val alphabetNew = alphabet.copyOfRange(1, alphabet.size)
         println(firstLast)
@@ -136,27 +148,28 @@ fun generateEqualAndSep(size: Int, alphabet:Array<String>):CompactDFA<String>{
         //Visualization.visualize(concat2)
         return concat2
     } else {
-        while (true){
+        while (true) {
             var dfa = generateFiniteAutomata(size, ArrayAlphabet<String>(*alphabet))
-            if (dfa.size() > 2){
+            if (dfa.size() > 2) {
                 return dfa
             }
         }
     }
 }
 
-fun generateBlankAndEOL(size:Int, alphabet: ArrayAlphabet<String>):CompactDFA<String>{
+fun generateBlankAndEOL(size: Int, alphabet: ArrayAlphabet<String>): CompactDFA<String> {
     return generateFiniteAutomata(size, alphabet)
 }
-fun generateConst(size: Int, alphabet: ArrayAlphabet<String>):CompactDFA<String> {
+
+fun generateConst(size: Int, alphabet: ArrayAlphabet<String>): CompactDFA<String> {
     val constAutomata = generateInfiniteAutomata(size, alphabet)
     return constAutomata
 }
 
-fun generateVar(size:Int, alphabet: ArrayAlphabet<String>, constDFA:CompactDFA<String>):CompactDFA<String>{
-    while (true){
+fun generateVar(size: Int, alphabet: ArrayAlphabet<String>, constDFA: CompactDFA<String>): CompactDFA<String> {
+    while (true) {
         val varAutomata = generateInfiniteAutomata(size, alphabet)
-        if(dfaAnd(varAutomata, constDFA).size() == 1){
+        if (dfaAnd(varAutomata, constDFA).size() == 1) {
             return varAutomata
         }
     }
