@@ -131,6 +131,7 @@ fun test4() {
 }
 
 fun main(args: Array<String>) {
+    server.runserver()
     val alphabet = ArrayAlphabet("a", "b", "c", "0", "1", "2")
     /*    val test1 = regex("a*b")
         val test2 = regex("c*d")
