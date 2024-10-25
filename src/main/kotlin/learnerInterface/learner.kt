@@ -7,10 +7,12 @@ import net.automatalib.automaton.fsa.CompactDFA
 import net.automatalib.automaton.fsa.CompactNFA
 import net.automatalib.util.automaton.fsa.DFAs
 import net.automatalib.util.automaton.fsa.NFAs
+import net.automatalib.visualization.Visualization
 
 
 fun checkWord(dfa: CompactDFA<String>, word: String): Boolean {
-    return dfa.accepts(word.map { it.toString() }.toMutableList())
+    val castedWord = if (word == "ε") "" else word
+    return dfa.accepts(castedWord.map { it.toString() }.toMutableList())
 }
 
 fun checkAutomata(
@@ -19,7 +21,7 @@ fun checkAutomata(
     suffixes: List<String>,
     matrix: List<String>,
     initialDFA: CompactDFA<String>
-): String {
+): Pair<String, Boolean> {
     val alphabet = ArrayAlphabet<String>("0", "1", "2", "a", "b", "c")
     val lenOfRow = suffixes.size
     var resNFA = CompactNFA<String>(alphabet)
@@ -28,9 +30,15 @@ fun checkAutomata(
 
     for (i in mainPrefixes.indices) {
         var currentState = initialState
-        val prefixSplitted = mainPrefixes[i].split("")
+        var prefixSplitted = mainPrefixes[i].split("")
+        if (prefixSplitted.size > 0) {
+            prefixSplitted = prefixSplitted.subList(1, prefixSplitted.size - 1)
+        }
+
         if (mainPrefixes[i] == "ε") {
-            //resNFA.addInitialState()
+            if (matrix[i * lenOfRow] == "1") {
+                resNFA.setAccepting(currentState, true)
+            }
         } else {
             for (input in prefixSplitted) {
                 val nextState = resNFA.getTransitions(currentState, input)
@@ -50,7 +58,10 @@ fun checkAutomata(
     }
     for (i in nonMainPrefixes.indices) {
         var currentState = initialState
-        val prefixSplitted = nonMainPrefixes[i].split("")
+        var prefixSplitted = nonMainPrefixes[i].split("")
+        if (prefixSplitted.size > 0) {
+            prefixSplitted = prefixSplitted.subList(1, prefixSplitted.size - 1)
+        }
         val correspondingMainPrefix =
             prefixMap.get(matrix.subList((i + mainPrefixes.size) * lenOfRow, (i + 1 + mainPrefixes.size) * lenOfRow))
         if (correspondingMainPrefix == null) {
@@ -73,16 +84,25 @@ fun checkAutomata(
     var resDFA = CompactDFA<String>(alphabet)
     NFAs.determinize(resNFA, alphabet, resDFA, true, true)
     val dfaComplement = DFAs.complement(resDFA, alphabet)
+    //Visualization.visualize(resDFA)
+    //Visualization.visualize(initialDFA)
+    //Visualization.visualize(dfaComplement)
     val initialMinusReceived = dfaAnd(initialDFA, dfaComplement)
-    if (initialMinusReceived.size() == 1 || initialMinusReceived.size() == 0){
+    //Visualization.visualize(initialMinusReceived)
+    if (initialMinusReceived.size() == 1 || initialMinusReceived.size() == 0) {
         val initialComplement = DFAs.complement(initialDFA, alphabet)
         val recievedMinusInitial = dfaAnd(resDFA, initialComplement)
-        if (recievedMinusInitial.size() == 0 || recievedMinusInitial.size() == 1){
-            return ""
+        if (recievedMinusInitial.size() == 0 || recievedMinusInitial.size() == 1) {
+            return Pair<String, Boolean>("true", false)
         } else {
-            return findWordForDFA(recievedMinusInitial)
+            val res = findWordForDFA(recievedMinusInitial)
+            return  Pair<String, Boolean>(res, false)
         }
     } else {
-        return findWordForDFA(initialMinusReceived)
+        //Visualization.visualize(initialDFA)
+        //Visualization.visualize(resDFA)
+        //Visualization.visualize(initialMinusReceived)
+        val res = findWordForDFA(initialMinusReceived)
+        return  Pair<String, Boolean>(findWordForDFA(initialMinusReceived), true)
     }
 }

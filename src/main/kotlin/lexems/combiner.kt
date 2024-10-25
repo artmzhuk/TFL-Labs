@@ -1,10 +1,14 @@
 package lexems
 
+import net.automatalib.alphabet.ArrayAlphabet
 import net.automatalib.automaton.fsa.CompactDFA
 import net.automatalib.visualization.Visualization
 
 fun combineLexems(size: Int, nesting: Int, lexems: LexemBundle):CompactDFA<String> {
-    val res = programCompute(size, nesting, lexems)
+    var res = programCompute(size, nesting, lexems)
+    if (res.inputAlphabet.size < 6){
+        res = copyWithNewAlphabet(res, ArrayAlphabet<String>("0", "1", "2", "a", "b", "c"))
+    }
     return res
 }
 

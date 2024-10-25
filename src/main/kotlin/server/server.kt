@@ -20,10 +20,13 @@ data class StartRequest(val maxSize: Int, val nesting: Int)
 data class SizeResponse(val size: Int)
 
 @Serializable
+data class checkTableResp(val response: String, val type:Boolean)
+
+@Serializable
 data class StringJson(val word: String)
 
 @Serializable
-data class BooleanJson(val response: Boolean)
+data class BooleanJson(val response: String)
 
 @Serializable
 data class TableRequest(
@@ -40,6 +43,7 @@ fun runserver() {
     val startRequestLens = Body.auto<StartRequest>().toLens()
     val sizeResponseLens = Body.auto<SizeResponse>().toLens()
     val stringJsonLens = Body.auto<StringJson>().toLens()
+    val checkTableRespJsonLens = Body.auto<checkTableResp>().toLens()
     val booleanJsonLens = Body.auto<BooleanJson>().toLens()
     val TableRequestLens = Body.auto<TableRequest>().toLens()
 
@@ -58,8 +62,11 @@ fun runserver() {
         "/checkWord" bind Method.POST to { request ->
             val word = stringJsonLens(request)
             val res = checkWord(currentDFA, word.word)
-
-            Response(Status.OK).with(booleanJsonLens of BooleanJson(res))
+            var strRes = "0"
+            if (res) {
+                strRes = "1"
+            }
+            Response(Status.OK).with(booleanJsonLens of BooleanJson(strRes))
         },
 
         "/checkTable" bind Method.POST to { request ->
@@ -72,7 +79,7 @@ fun runserver() {
                 currentDFA
             )
 
-            Response(Status.OK).with(stringJsonLens of StringJson(res))
+            Response(Status.OK).with(checkTableRespJsonLens of checkTableResp(res.first, res.second))
         },
 
         "/getSize" bind Method.GET to { request ->

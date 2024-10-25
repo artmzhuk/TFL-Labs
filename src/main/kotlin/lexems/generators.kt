@@ -78,6 +78,9 @@ fun copyWithNewAlphabet(dfa: CompactDFA<String>, newAlphabet: Alphabet<String>):
     val stateMapping1 = mutableMapOf<Int, Int>()
     for (state in dfa.states) {
         val newState = newDFA.addState(dfa.isAccepting(state))
+        if (dfa.initialState == state){
+            newDFA.setInitial(newState, true)
+        }
         stateMapping1[state] = newState
     }
     for (state in dfa.states) {
@@ -223,7 +226,12 @@ fun generateInfiniteAutomata(size: Int, alphabet: Alphabet<String>): CompactDFA<
 }
 
 fun findWordForDFA(dfa: CompactDFA<String>): String {
-    return findWordForDFARecursive(dfa, dfa.initialState!!, Array<Boolean>(dfa.size()) { false }, "")
+    val res = findWordForDFARecursive(dfa, dfa.initialState!!, Array<Boolean>(dfa.size()) { false }, "")
+    if (res != "trap"){
+        return res
+    } else {
+        return ""
+    }
 }
 
 private fun findWordForDFARecursive(dfa: CompactDFA<String>, currentState: Int, visited: Array<Boolean>, currentString: String): String {
@@ -235,11 +243,14 @@ private fun findWordForDFARecursive(dfa: CompactDFA<String>, currentState: Int, 
     for (input in dfa.inputAlphabet) {
         val nextState = dfa.getSuccessor(currentState, input)
         val trans = dfa.getTransition(currentState, input)
-        if (nextState != -1) {
-            return findWordForDFARecursive(dfa, nextState, visited, currentString + input)
+        if (nextState != -1 && !visited[nextState]) {
+            val res = findWordForDFARecursive(dfa, nextState, visited, currentString + input)
+            if (res != "trap"){
+                return res
+            }
         }
     }
-    return ""
+    return "trap"
 }
 
 fun dfsForEqual(dfa: CompactDFA<String>, currentState: Int, visited: Array<Boolean>, toChange: String): Boolean {
