@@ -12,6 +12,7 @@ import learnerInterface.checkAutomata
 import learnerInterface.checkWord
 import lexems.combineLexems
 import net.automatalib.automaton.fsa.CompactDFA
+import net.automatalib.visualization.Visualization
 
 @Serializable
 data class StartRequest(val maxSize: Int, val nesting: Int)
@@ -54,7 +55,8 @@ fun runserver() {
 
             val lexems = lexems.generateLexems(startRequest.maxSize, startRequest.nesting)
             currentDFA = combineLexems(startRequest.maxSize, startRequest.nesting, lexems)
-
+            //println(currentDFA.size())
+            //Visualization.visualize(currentDFA)
 
             Response(Status.OK)
         },
@@ -78,7 +80,6 @@ fun runserver() {
                 table.table.split(" "),
                 currentDFA
             )
-
             Response(Status.OK).with(checkTableRespJsonLens of checkTableResp(res.first, res.second))
         },
 
@@ -92,8 +93,7 @@ fun runserver() {
 
         )
 
-    val server = DebuggingFilters.PrintRequestAndResponse()
-        .then(app)
+    val server = app
         .asServer(Jetty(8080))
         .start()
 

@@ -38,7 +38,7 @@ fun generateLexems(size: Int, nesting: Int): LexemBundle {
     val eolBlankList = initialSymbols.subList(0, 2)
     val equalSep = initialSymbols.subList(2, 3)
     val constVarSet = initialSymbols.subList(3, 5)
-    val bracketsSet = initialSymbols.subList(5, 6)
+    val bracketsSet = initialSymbols.subList(5, 6)// TODO
 
     val constDFA = generateConst(size, ArrayAlphabet<String>(constVarSet.toTypedArray()[0]))
     val varDFA = generateVar(size, ArrayAlphabet<String>(constVarSet.toTypedArray()[1]), constDFA)
@@ -111,7 +111,6 @@ fun generateLbr(
     constDFA: CompactDFA<String>
 ): CompactDFA<String> {
     while (true) {
-        //TODO ?
         val lbr1DFA = if (size > 2) {
             generateFiniteAutomata(2, alphabet)
         } else {

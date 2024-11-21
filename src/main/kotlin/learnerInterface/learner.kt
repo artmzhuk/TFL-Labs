@@ -93,6 +93,7 @@ fun checkAutomata(
         val initialComplement = DFAs.complement(initialDFA, alphabet)
         val recievedMinusInitial = dfaAnd(resDFA, initialComplement)
         if (recievedMinusInitial.size() == 0 || recievedMinusInitial.size() == 1) {
+            println(resDFA.size())
             return Pair<String, Boolean>("true", false)
         } else {
             val res = findWordForDFA(recievedMinusInitial)
