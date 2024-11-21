@@ -52,10 +52,12 @@ fun runserver() {
     val app: HttpHandler = routes(
         "/start" bind Method.POST to { request ->
             val startRequest = startRequestLens(request)
-
+            if (startRequest.maxSize < 3){
+                Response(Status.BAD_REQUEST)
+            }
             val lexems = lexems.generateLexems(startRequest.maxSize, startRequest.nesting)
             currentDFA = combineLexems(startRequest.maxSize, startRequest.nesting, lexems)
-            //println(currentDFA.size())
+            println(currentDFA.size())
             //Visualization.visualize(currentDFA)
 
             Response(Status.OK)

@@ -37,8 +37,7 @@ fun generateLexems(size: Int, nesting: Int): LexemBundle {
 
     val eolBlankList = initialSymbols.subList(0, 2)
     val equalSep = initialSymbols.subList(2, 3)
-    val constVarSet = initialSymbols.subList(3, 5)
-    val bracketsSet = initialSymbols.subList(5, 6)// TODO
+    val constVarSet = initialSymbols.subList(3, 6)
 
     val constDFA = generateConst(size, ArrayAlphabet<String>(constVarSet.toTypedArray()[0]))
     val varDFA = generateVar(size, ArrayAlphabet<String>(constVarSet.toTypedArray()[1]), constDFA)
@@ -46,18 +45,17 @@ fun generateLexems(size: Int, nesting: Int): LexemBundle {
     val blankDFA = generateBlankAndEOL(size, ArrayAlphabet<String>(eolBlankList[1]))
     val equalDFA = generateEqualAndSep(size, equalSep.toTypedArray())
     val sepDFA = generateEqualAndSep(size, equalSep.toTypedArray())
-    val lbr1DFA = generateLbr(size, ArrayAlphabet<String>(*bracketsSet.toTypedArray()), varDFA, constDFA)
-    var lbr2DFA = generateLbr(size, ArrayAlphabet<String>(*bracketsSet.toTypedArray()), varDFA, constDFA)
-    var lbr3DFA = generateLbr(size, ArrayAlphabet<String>(*bracketsSet.toTypedArray()), varDFA, constDFA)
-    var rbr1DFA = generateRbr(size, ArrayAlphabet<String>(*bracketsSet.toTypedArray()), varDFA, constDFA, lbr1DFA)
-    var rbr2DFA = generateRbr(size, ArrayAlphabet<String>(*bracketsSet.toTypedArray()), varDFA, constDFA, lbr2DFA)
-    var rbr3DFA = generateRbr(size, ArrayAlphabet<String>(*bracketsSet.toTypedArray()), varDFA, constDFA, lbr3DFA)
+    val lbr1DFA = generateLbr(size, ArrayAlphabet<String>(*constVarSet.toTypedArray()), varDFA, constDFA)
+    var lbr2DFA = generateLbr(size, ArrayAlphabet<String>(*constVarSet.toTypedArray()), varDFA, constDFA)
+    var lbr3DFA = generateLbr(size, ArrayAlphabet<String>(*constVarSet.toTypedArray()), varDFA, constDFA)
+    var rbr1DFA = generateRbr(size, ArrayAlphabet<String>(*constVarSet.toTypedArray()), varDFA, constDFA, lbr1DFA)
+    var rbr2DFA = generateRbr(size, ArrayAlphabet<String>(*constVarSet.toTypedArray()), varDFA, constDFA, lbr2DFA)
+    var rbr3DFA = generateRbr(size, ArrayAlphabet<String>(*constVarSet.toTypedArray()), varDFA, constDFA, lbr3DFA)
 
     val lexemBundle = LexemBundle(
         constDFA, varDFA, eolDFA, blankDFA, equalDFA, sepDFA,
         lbr1DFA, lbr2DFA, lbr3DFA, rbr1DFA, rbr2DFA, rbr3DFA
     )
-
     //dfaUnion(constDFA, varDFA)
     //Visualization.visualize(constDFA)
     //Visualization.visualize(varDFA)
@@ -111,15 +109,8 @@ fun generateLbr(
     constDFA: CompactDFA<String>
 ): CompactDFA<String> {
     while (true) {
-        val lbr1DFA = if (size > 2) {
-            generateFiniteAutomata(2, alphabet)
-        } else {
-            generateFiniteAutomata(size, alphabet)
-        }
-        //Visualization.visualize(lbr1DFA)
-        //Visualization.visualize(constDFA)
+        val lbr1DFA = generateFiniteAutomata(size, alphabet)
         val andConstSize = dfaAnd(lbr1DFA, constDFA).size()
-        //Visualization.visualize(DFAs.and(lbr1DFA, constDFA, alphabet))
 
         val andVarSize = dfaAnd(lbr1DFA, varDFA).size()
         if ((andConstSize == 1 || andConstSize == 0) && (andVarSize == 1 || andVarSize == 0)) {
