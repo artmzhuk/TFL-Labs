@@ -2,7 +2,6 @@ package lexems
 
 import net.automatalib.alphabet.ArrayAlphabet
 import net.automatalib.automaton.fsa.CompactDFA
-import net.automatalib.util.automaton.fsa.DFAs
 import net.automatalib.visualization.Visualization
 
 class LexemBundle(
@@ -20,60 +19,34 @@ class LexemBundle(
     val rbr3DFA: CompactDFA<String>
 )
 
-fun generateAlphabets() {
-    val initialSymbols = mutableSetOf("a", "b", "c", "0", "1", "2")
-
-    val firstSet = initialSymbols.shuffled().take(2).toSet()
-    val secondSet = initialSymbols.shuffled().take(1).toSet()
-    val thirdSet = initialSymbols.shuffled().take(3).toSet()
-
-    println("First Set: $firstSet")
-    println("Second Set: $secondSet")
-    println("Third Set: $thirdSet")
-}
 
 fun generateLexems(size: Int, nesting: Int): LexemBundle {
     val initialSymbols = mutableSetOf("a", "b", "c", "0", "1", "2").shuffled()
 
     val eolBlankList = initialSymbols.subList(0, 2)
     val equalSep = initialSymbols.subList(2, 3)
-    val constVarSet = initialSymbols.subList(3, 6)
+    val constVarBracketsSet = initialSymbols.subList(3, 6)
 
-    val constDFA = generateConst(size, ArrayAlphabet<String>(constVarSet.toTypedArray()[0]))
-    val varDFA = generateVar(size, ArrayAlphabet<String>(constVarSet.toTypedArray()[1]), constDFA)
+    val constDFA = generateConst(size, ArrayAlphabet<String>(constVarBracketsSet.toTypedArray()[0]))
+    val varDFA = generateVar(size, ArrayAlphabet<String>(constVarBracketsSet.toTypedArray()[1]), constDFA)
     val eolDFA = generateBlankAndEOL(size, ArrayAlphabet<String>(eolBlankList[0]))
     val blankDFA = generateBlankAndEOL(size, ArrayAlphabet<String>(eolBlankList[1]))
     val equalDFA = generateEqualAndSep(size, equalSep.toTypedArray())
     val sepDFA = generateEqualAndSep(size, equalSep.toTypedArray())
-    val lbr1DFA = generateLbr(size, ArrayAlphabet<String>(*constVarSet.toTypedArray()), varDFA, constDFA)
-    var lbr2DFA = generateLbr(size, ArrayAlphabet<String>(*constVarSet.toTypedArray()), varDFA, constDFA)
-    var lbr3DFA = generateLbr(size, ArrayAlphabet<String>(*constVarSet.toTypedArray()), varDFA, constDFA)
-    var rbr1DFA = generateRbr(size, ArrayAlphabet<String>(*constVarSet.toTypedArray()), varDFA, constDFA, lbr1DFA)
-    var rbr2DFA = generateRbr(size, ArrayAlphabet<String>(*constVarSet.toTypedArray()), varDFA, constDFA, lbr2DFA)
-    var rbr3DFA = generateRbr(size, ArrayAlphabet<String>(*constVarSet.toTypedArray()), varDFA, constDFA, lbr3DFA)
+    val lbr1DFA = generateLbr(size, ArrayAlphabet<String>(*constVarBracketsSet.toTypedArray()), varDFA, constDFA)
+    var lbr2DFA = generateLbr(size, ArrayAlphabet<String>(*constVarBracketsSet.toTypedArray()), varDFA, constDFA)
+    var lbr3DFA = generateLbr(size, ArrayAlphabet<String>(*constVarBracketsSet.toTypedArray()), varDFA, constDFA)
+    var rbr1DFA = generateRbr(size, ArrayAlphabet<String>(*constVarBracketsSet.toTypedArray()), varDFA, constDFA, lbr1DFA)
+    var rbr2DFA = generateRbr(size, ArrayAlphabet<String>(*constVarBracketsSet.toTypedArray()), varDFA, constDFA, lbr2DFA)
+    var rbr3DFA = generateRbr(size, ArrayAlphabet<String>(*constVarBracketsSet.toTypedArray()), varDFA, constDFA, lbr3DFA)
+
+
 
     val lexemBundle = LexemBundle(
         constDFA, varDFA, eolDFA, blankDFA, equalDFA, sepDFA,
         lbr1DFA, lbr2DFA, lbr3DFA, rbr1DFA, rbr2DFA, rbr3DFA
     )
-    //dfaUnion(constDFA, varDFA)
-    //Visualization.visualize(constDFA)
-    //Visualization.visualize(varDFA)
-    //Visualization.visualize(dfaOr(constDFA, varDFA))
 
-    //Visualization.visualize(DFAs.and(constDFA, varDFA,  ArrayAlphabet()))
-    /*    Visualization.visualize(eolDFA)
-        Visualization.visualize(blankDFA)
-        Visualization.visualize(equalDFA)
-        Visualization.visualize(sepDFA)
-
-        Visualization.visualize(lbr1DFA)
-        Visualization.visualize(lbr2DFA)
-        Visualization.visualize(lbr3DFA)
-
-        Visualization.visualize(rbr1DFA)
-        Visualization.visualize(rbr2DFA)
-        Visualization.visualize(rbr3DFA)*/
     return lexemBundle
 }
 
@@ -86,11 +59,11 @@ fun generateRbr(
 ): CompactDFA<String> {
     while (true) {
         val rbr1DFA = generateFiniteAutomata(size, alphabet)
-        val andConstSize = dfaAnd(rbr1DFA, constDFA).size()
-        val andVarSize = dfaAnd(rbr1DFA, varDFA).size()
-        val andLbrSize = dfaAnd(rbr1DFA, lbrDFA).size()
-        if ((andConstSize == 1 || andConstSize == 0) && (andVarSize == 1 || andVarSize == 0)
-            && (andLbrSize == 1 || andLbrSize == 0)
+        val andConst = dfaAnd(rbr1DFA, constDFA)
+        val andVar = dfaAnd(rbr1DFA, varDFA)
+        val andLbr = dfaAnd(rbr1DFA, lbrDFA)
+        if (isEmpty(andConst) && isEmpty(andVar)
+            && isEmpty(andLbr)
         ) {
             val concat = concatenateAutomata(lbrDFA, rbr1DFA)
             val concatAndLbr = dfaAnd(lbrDFA, concat)
@@ -110,10 +83,10 @@ fun generateLbr(
 ): CompactDFA<String> {
     while (true) {
         val lbr1DFA = generateFiniteAutomata(size, alphabet)
-        val andConstSize = dfaAnd(lbr1DFA, constDFA).size()
+        val andConst = dfaAnd(lbr1DFA, constDFA)
+        val andVar =  dfaAnd(lbr1DFA, varDFA)
 
-        val andVarSize = dfaAnd(lbr1DFA, varDFA).size()
-        if ((andConstSize == 1 || andConstSize == 0) && (andVarSize == 1 || andVarSize == 0)) {
+        if (isEmpty(andVar) && isEmpty(andConst)) {//TODO
             return lbr1DFA
         }
     }
@@ -159,8 +132,19 @@ fun generateConst(size: Int, alphabet: ArrayAlphabet<String>): CompactDFA<String
 fun generateVar(size: Int, alphabet: ArrayAlphabet<String>, constDFA: CompactDFA<String>): CompactDFA<String> {
     while (true) {
         val varAutomata = generateInfiniteAutomata(size, alphabet)
-        if (dfaAnd(varAutomata, constDFA).size() == 1) {
+        if (isEmpty(dfaAnd(varAutomata, constDFA))) {
             return varAutomata
         }
+    }
+}
+
+fun isEmpty(a: CompactDFA<String>): Boolean{
+    return if (a.size() == 0){
+        true
+    } else if (a.size() == 1){
+        val numOfTransitions = a.getTransitions(a.initialState).size
+        numOfTransitions == 0
+    } else {
+        false
     }
 }
